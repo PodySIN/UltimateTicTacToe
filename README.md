@@ -62,3 +62,17 @@ npm run dev
 - React 18, Vite, Zustand
 - Cloudflare Workers + SQLite-backed Durable Objects
 - WebSocket relay, без WebRTC, Firebase и PeerJS
+
+## Multi-backend online rooms
+
+Online rooms try Firebase and Supabase first (Firebase is preferred for approximately 70% of newly-created rooms, Supabase for approximately 30%); Cloudflare is the final fallback. The selected backend is included in the invite URL as `backend=...`, so both players join the same room service. The room-code-only flow probes Firebase, Supabase, then Cloudflare.
+
+### Supabase setup
+
+The browser uses the project's URL and `sb_publishable_...` key in `src/lib/supabaseConfig.js`. In the Supabase Dashboard, open **Realtime → Settings** and make sure **Allow public access to channels** is enabled. This implementation uses public Realtime Broadcast and Presence channels; no Postgres table or SQL migration is required. Anyone who knows a room code and has the public project key can join/listen to that public room, so room codes should not be treated as secrets for sensitive data. Do not put a Supabase secret key in the frontend.
+
+### Important limitations
+
+- Provider selection is probabilistic, not a global live connection counter. It does not guarantee that Firebase will never reach its 100-connection Spark limit; when a new room cannot be created there, the client falls back to Supabase and then Cloudflare.
+- Existing rooms stay on the backend where they were created. If that backend is unreachable only from the guest's network, trying another backend cannot magically move the existing room. The host must create a new room on a reachable backend and share its new link.
+- Public Realtime channels rely on Supabase's **Allow public access to channels** setting. If public access is disabled, Realtime connections will fail unless authorization policies are added.

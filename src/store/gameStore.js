@@ -175,7 +175,7 @@ export const useGameStore = create((set, get) => ({
         roomInstance = room;
         set({
           roomCode: room.code,
-          shareLink: shareUrl(room.code),
+          shareLink: shareUrl(room.code, room.backend),
           mode: 'online',
           status: 'waiting',
         });
@@ -248,6 +248,7 @@ export const useGameStore = create((set, get) => ({
         }
         roomInstance = r;
         remotePeerId = null;
+        set({ shareLink: shareUrl(room, r.backend) });
         // hello идёт хосту; хост отвечает sync
         r.send({ type: 'hello', role: 'guest' });
         joinTimer = setTimeout(() => {
